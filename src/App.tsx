@@ -5,7 +5,7 @@ import {
   createShader,
   createProgram,
   setGeometry,
-  setColors,
+  setNormals,
 } from "./utils/webgl-utils";
 import { m4 } from "./utils/matrix";
 import sourceShaderVertex from "./assets/shader.vert";
@@ -18,7 +18,7 @@ function App() {
   let gl: WebGLRenderingContext | null;
   let program: WebGLProgram | null;
   let positionBuffer: WebGLBuffer | null;
-  let colorBuffer: WebGLBuffer | null;
+  let normalBuffer: WebGLBuffer | null;
 
   const translate = [170, 150, 0],
     rotation = [0, 0, 0],
@@ -42,9 +42,9 @@ function App() {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     setGeometry(gl);
 
-    colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    setColors(gl);
+    normalBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    setNormals(gl);
 
     console.log("init");
   };
@@ -78,9 +78,14 @@ function App() {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     const positionLocation = gl.getAttribLocation(program, "a_position");
-    const colorLocation = gl.getAttribLocation(program, "a_color");
+    const normalLocation = gl.getAttribLocation(program, "a_normal");
     const matrixLocation = gl.getUniformLocation(program, "u_matrix");
     const fudgeLocation = gl.getUniformLocation(program, "u_fudgeFactor");
+    const colorLocation = gl.getUniformLocation(program, "u_color");
+    const reverseLightDirection = gl.getUniformLocation(
+      program,
+      "u_reverseLightDirection"
+    );
 
     gl.enableVertexAttribArray(positionLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -98,12 +103,12 @@ function App() {
       offset
     );
 
-    gl.enableVertexAttribArray(colorLocation);
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    type = gl.UNSIGNED_BYTE;
-    normalize = true;
+    gl.enableVertexAttribArray(normalLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+    type = gl.FLOAT;
+    normalize = false;
     gl.vertexAttribPointer(
-      colorLocation,
+      normalLocation,
       size,
       type,
       normalize,
@@ -112,8 +117,11 @@ function App() {
     );
 
     const translateMatrix = getMatrix();
+    // 为全局变量u_*赋值
     gl.uniformMatrix4fv(matrixLocation, false, translateMatrix);
     gl.uniform1f(fudgeLocation, 2);
+    gl.uniform4fv(colorLocation, [0.2, 1, 0.2, 1]); // 光照颜色
+    gl.uniform3fv(reverseLightDirection, m4.normalize([0.5, 0.7, 1]));
     const primitiveType = gl.TRIANGLES;
     gl.drawArrays(primitiveType, 0, 16 * 6);
   };

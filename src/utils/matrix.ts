@@ -3,6 +3,8 @@ interface SinCosPair {
     cos: number
 };
 
+type position3 = [number, number, number];
+
 const getTriangleVal = (angle: number): SinCosPair => {
     const radius = Math.PI * angle/180
     return {
@@ -124,6 +126,19 @@ const m4 = {
         0, 0, 2/depth, 0,
         -1, 1, 0, 1
     ],
+    
+    normalize: (v: position3): position3 => {
+        const length = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+        if (length > 0.0001) {
+            return [
+                v[0] / length,
+                v[1] / length,
+                v[2] / length
+            ]
+        } else {
+            return v
+        }
+    },
 
     multiply: function(b: number[], a: number[]) {
         var b00 = b[0 * 4 + 0];
